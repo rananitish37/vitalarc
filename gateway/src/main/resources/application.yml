@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: http://${USER_SERVICE_HOST:localhost}:8081
+          predicates:
+            - Path=/api/auth/**
+
+        # Added as each service is built:
+        # - id: workout-service
+        #   uri: http://${WORKOUT_SERVICE_HOST:localhost}:8082
+        #   predicates:
+        #     - Path=/api/workouts/**
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:change-this-in-every-environment-including-local-dev-32-bytes-min}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
