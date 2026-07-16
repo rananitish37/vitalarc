@@ -1,22 +1,21 @@
 version: "3.9"
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: vitalarc-postgres
+  mysql:
+    image: mysql:8.4
+    container_name: vitalarc-mysql
     environment:
-      POSTGRES_USER: vitalarc
-      POSTGRES_PASSWORD: vitalarc
-      POSTGRES_MULTIPLE_DATABASES: vitalarc_users,vitalarc_workouts
+      MYSQL_ROOT_PASSWORD: root
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vitalarc"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   redis:
     image: redis:7-alpine
@@ -28,8 +27,8 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: vitalarc-rabbitmq
     ports:
-      - "5672:5672"   # AMQP
-      - "15672:15672" # management UI (guest/guest)
+      - "5672:5672"
+      - "15672:15672"
 
   user-service:
     build: ./user-service
@@ -37,11 +36,11 @@ services:
     ports:
       - "8081:8081"
     environment:
-      DB_HOST: postgres
+      DB_HOST: mysql
       DB_NAME: vitalarc_users
       JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-32-bytes-minimum}
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
 
   gateway:
@@ -51,14 +50,9 @@ services:
       - "8080:8080"
     environment:
       USER_SERVICE_HOST: user-service
-      # Must be IDENTICAL to user-service's JWT_SECRET - the gateway verifies
-      # tokens that user-service signed, so they need the same key.
       JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-32-bytes-minimum}
     depends_on:
       - user-service
 
 volumes:
-  postgres_data:
-
-# workout-service, ai-coach-service and reporting-service get added here
-# as each one is built out over the next few days.
+  mysql_data:

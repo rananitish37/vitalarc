@@ -5,10 +5,12 @@ spring:
   application:
     name: user-service
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:vitalarc_users}
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:vitalarc_users}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${DB_USER:vitalarc}
     password: ${DB_PASSWORD:vitalarc}
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: validate
     properties:
@@ -16,7 +18,7 @@ spring:
         format_sql: true
     open-in-view: false
   flyway:
-    enabled: false # enabled once we add versioned migrations on Day 1 afternoon
+    enabled: true
 
 security:
   jwt:
