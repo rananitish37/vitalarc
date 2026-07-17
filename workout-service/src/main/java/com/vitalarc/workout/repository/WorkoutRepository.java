@@ -2,14 +2,14 @@ package com.vitalarc.workout.repository;
 
 import com.vitalarc.workout.entity.Workout;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
-@Repository
-public interface WorkoutRepository extends JpaRepository<Workout, Long> {
+public interface WorkoutRepository extends JpaRepository<Workout, UUID> {
 
-    // Spring Data JPA will automatically implement this query based on the method name
-    List<Workout> findByUserIdAndDateBetween(Long userId, LocalDate startDate, LocalDate endDate);
+    List<Workout> findByUserIdAndWorkoutDateBetween(UUID userId, LocalDate start, LocalDate end);
+
+    List<Workout> findByUserIdOrderByWorkoutDateDesc(UUID userId);
 }

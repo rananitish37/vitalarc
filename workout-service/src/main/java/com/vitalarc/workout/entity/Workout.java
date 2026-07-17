@@ -1,26 +1,60 @@
 package com.vitalarc.workout.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Entity
+@Table(name = "workouts")
 @Getter
 @Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Workout {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private UUID id;
 
-    private Long userId;
-    private LocalDate date;
-    private double intensity; // 1-10 scale
-    private int duration;     // minutes
+    // Must be UUID - this has to match the id user-service issues and the
+    // gateway forwards via the X-User-Id header. A Long here would break
+    // the moment a real request comes through from the gateway.
+    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private UUID userId;
 
-    public double getLoad() {
-        return intensity * duration;
+    @Column(nullable = false)
+    private LocalDate workoutDate;
+
+    @Column(nullable = false, length = 100)
+    private String activityType;
+
+    @Column(nullable = false)
+    private Integer durationMinutes;
+
+    @Column(nullable = false)
+    private Integer rpe; // Rate of Perceived Exertion, 1-10
+
+    @Column(nullable = false)
+    private Integer load; // durationMinutes * rpe, stored so history queries stay fast
+
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt = Instant.now();
+
+    public Workout(UUID userId, LocalDate workoutDate, String activityType, Integer durationMinutes, Integer rpe) {
+        this.userId = userId;
+        this.workoutDate = workoutDate;
+        this.activityType = activityType;
+        this.durationMinutes = durationMinutes;
+        this.rpe = rpe;
+        this.load = durationMinutes * rpe;
     }
 }
