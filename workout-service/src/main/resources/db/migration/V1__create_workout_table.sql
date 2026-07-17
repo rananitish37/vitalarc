@@ -5,7 +5,7 @@ CREATE TABLE workouts (
     activity_type VARCHAR(100) NOT NULL,
     duration_minutes INT NOT NULL,
     rpe INT NOT NULL,
-    load INT NOT NULL,
+    `load` INT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
