@@ -17,6 +17,11 @@ spring:
           predicates:
             - Path=/api/workouts/**
 
+        - id: ai-coach-service
+          uri: http://${AI_COACH_SERVICE_HOST:localhost}:8083
+          predicates:
+            - Path=/api/coach/**
+
 security:
   jwt:
     secret: ${JWT_SECRET:change-this-in-every-environment-including-local-dev-32-bytes-min}
