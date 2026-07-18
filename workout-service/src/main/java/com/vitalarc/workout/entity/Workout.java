@@ -40,7 +40,7 @@ public class Workout {
     @Column(nullable = false)
     private Integer rpe;
 
-    @Column(nullable = false)
+    @Column(name = "`load`")
     private Integer load;
 
     @Column(nullable = false, updatable = false)
