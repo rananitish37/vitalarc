@@ -1,5 +1,7 @@
 package com.vitalarc.coach.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,6 +15,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = new HashMap<>();
@@ -24,14 +28,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RestClientException.class)
     public ResponseEntity<ErrorResponse> handleUpstreamFailure(RestClientException ex) {
-        // Covers both workout-service being unreachable and the Claude API failing -
-        // either way the client gets a clean 502, not a raw stack trace.
+        log.error("Upstream call failed: {}", ex.getMessage(), ex);
         return ResponseEntity.status(502)
                 .body(ErrorResponse.of(502, "Bad Gateway", "A dependent service is currently unavailable. Please try again shortly."));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
+        log.error("Unexpected error: {}", ex.getMessage(), ex);
         return ResponseEntity.internalServerError()
                 .body(ErrorResponse.of(500, "Internal Server Error", "Something went wrong. Please try again."));
     }
