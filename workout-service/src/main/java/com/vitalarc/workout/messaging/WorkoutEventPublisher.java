@@ -18,10 +18,6 @@ public class WorkoutEventPublisher {
 
     public void publishWorkoutLogged(UUID userId, UUID workoutId) {
         WorkoutLoggedEvent event = new WorkoutLoggedEvent(userId, workoutId, Instant.now());
-        rabbitTemplate.convertAndSend(
-                RabbitMQConfig.WORKOUT_EXCHANGE,
-                RabbitMQConfig.WORKOUT_LOGGED_ROUTING_KEY,
-                event
-        );
+        rabbitTemplate.convertAndSend(RabbitMQConfig.WORKOUT_EXCHANGE, RabbitMQConfig.WORKOUT_LOGGED_ROUTING_KEY, event);
     }
 }

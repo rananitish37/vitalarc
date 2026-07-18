@@ -24,9 +24,6 @@ public class Workout {
     @JdbcTypeCode(SqlTypes.CHAR)
     private UUID id;
 
-    // Must be UUID - this has to match the id user-service issues and the
-    // gateway forwards via the X-User-Id header. A Long here would break
-    // the moment a real request comes through from the gateway.
     @Column(nullable = false)
     @JdbcTypeCode(SqlTypes.CHAR)
     private UUID userId;
@@ -41,10 +38,10 @@ public class Workout {
     private Integer durationMinutes;
 
     @Column(nullable = false)
-    private Integer rpe; // Rate of Perceived Exertion, 1-10
+    private Integer rpe;
 
     @Column(nullable = false)
-    private Integer load; // durationMinutes * rpe, stored so history queries stay fast
+    private Integer load;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();

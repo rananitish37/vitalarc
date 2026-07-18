@@ -3,17 +3,10 @@ package com.vitalarc.workout.exception;
 import java.time.Instant;
 import java.util.Map;
 
-public record ErrorResponse(
-        Instant timestamp,
-        int status,
-        String error,
-        String message,
-        Map<String, String> fieldErrors
-) {
+public record ErrorResponse(Instant timestamp, int status, String error, String message, Map<String, String> fieldErrors) {
     public static ErrorResponse of(int status, String error, String message) {
         return new ErrorResponse(Instant.now(), status, error, message, null);
     }
-
     public static ErrorResponse ofValidation(Map<String, String> fieldErrors) {
         return new ErrorResponse(Instant.now(), 400, "Validation failed", "One or more fields are invalid", fieldErrors);
     }
