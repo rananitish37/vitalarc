@@ -12,11 +12,10 @@ spring:
           predicates:
             - Path=/api/auth/**
 
-        # Added as each service is built:
-        # - id: workout-service
-        #   uri: http://${WORKOUT_SERVICE_HOST:localhost}:8082
-        #   predicates:
-        #     - Path=/api/workouts/**
+        - id: workout-service
+          uri: http://${WORKOUT_SERVICE_HOST:localhost}:8082
+          predicates:
+            - Path=/api/workouts/**
 
 security:
   jwt:
