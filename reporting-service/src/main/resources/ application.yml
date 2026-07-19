@@ -1,0 +1,38 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: reporting-service
+  datasource:
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3307}/${DB_NAME:vitalarc_reporting}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${DB_USER:vitalarc}
+    password: ${DB_PASSWORD:vitalarc}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+# Local disk for now - swapped for S3 storage once AWS is set up
+reporting:
+  local-storage-dir: ${REPORT_STORAGE_DIR:./reports-storage}
+
+services:
+  workout-service:
+    base-url: ${WORKOUT_SERVICE_URL:http://localhost:8082}
+  ai-coach-service:
+    base-url: ${AI_COACH_SERVICE_URL:http://localhost:8083}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
