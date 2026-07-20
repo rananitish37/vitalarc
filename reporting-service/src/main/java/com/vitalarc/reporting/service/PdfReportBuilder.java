@@ -46,10 +46,10 @@ public class PdfReportBuilder {
                 float y = PDRectangle.LETTER.getHeight() - MARGIN;
 
                 y = writeLine(content, titleFont, 20, MARGIN, y, "VitalArc Weekly Training Report");
-                y -= 6;
+                y -= 26;
                 y = writeLine(content, bodyFont, 11, MARGIN, y,
                         "Week of " + weekStart.format(DATE_FORMAT) + " - " + weekEnd.format(DATE_FORMAT));
-                y -= 20;
+                y -= 24;
 
                 y = writeLine(content, headingFont, 14, MARGIN, y, "Training Load Summary");
                 y -= 18;
