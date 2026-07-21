@@ -27,6 +27,11 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   user-service:
     build: ./user-service
@@ -35,11 +40,73 @@ services:
       - "8081:8081"
     environment:
       DB_HOST: mysql
+      DB_PORT: 3306
       DB_NAME: vitalarc_users
       JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-32-bytes-minimum}
     depends_on:
       mysql:
         condition: service_healthy
+
+  workout-service:
+    build: ./workout-service
+    container_name: vitalarc-workout-service
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: vitalarc_workouts
+      RABBITMQ_HOST: rabbitmq
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-32-bytes-minimum}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  ai-coach-service:
+    build: ./ai-coach-service
+    container_name: vitalarc-ai-coach-service
+    ports:
+      - "8083:8083"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: vitalarc_ai_coach
+      RABBITMQ_HOST: rabbitmq
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-32-bytes-minimum}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-lite-latest}
+      WORKOUT_SERVICE_URL: http://workout-service:8082
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      workout-service:
+        condition: service_started
+
+  reporting-service:
+    build: ./reporting-service
+    container_name: vitalarc-reporting-service
+    ports:
+      - "8084:8084"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: vitalarc_reporting
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-32-bytes-minimum}
+      WORKOUT_SERVICE_URL: http://workout-service:8082
+      AI_COACH_SERVICE_URL: http://ai-coach-service:8083
+    volumes:
+      - reports_data:/app/reports-storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+      workout-service:
+        condition: service_started
+      ai-coach-service:
+        condition: service_started
 
   gateway:
     build: ./gateway
@@ -48,9 +115,16 @@ services:
       - "8080:8080"
     environment:
       USER_SERVICE_HOST: user-service
+      WORKOUT_SERVICE_HOST: workout-service
+      AI_COACH_SERVICE_HOST: ai-coach-service
+      REPORTING_SERVICE_HOST: reporting-service
       JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-32-bytes-minimum}
     depends_on:
       - user-service
+      - workout-service
+      - ai-coach-service
+      - reporting-service
 
 volumes:
   mysql_data:
+  reports_data:
