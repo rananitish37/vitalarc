@@ -9,15 +9,19 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
     try {
       await register(email, password, displayName);
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
+    }finally {
+         setIsSubmitting(false);
     }
   }
 
@@ -25,7 +29,7 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight " style={{ color: '#000000' }}>Create your VitalArc account</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight text-slate-900">Create your VitalArc account</h1>
           <p className="text-sm text-slate-500 mt-1">Start your fitness and health journey</p>
         </div>
 
@@ -49,6 +53,7 @@ export default function RegisterPage() {
             </label>
             <input
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -63,6 +68,7 @@ export default function RegisterPage() {
             </label>
             <input
               type="password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -79,10 +85,11 @@ export default function RegisterPage() {
           )}
 
           <button
+            disabled={isSubmitting}
             type="submit"
             className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-sm transition-colors cursor-pointer text-sm mt-2"
           >
-            Register
+            {isSubmitting ? 'Registering...' : 'Register'}
           </button>
         </form>
 

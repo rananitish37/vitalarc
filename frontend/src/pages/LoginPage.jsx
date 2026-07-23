@@ -8,15 +8,19 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
     try {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
+    } finally{
+        setIsSubmitting(false);
     }
   }
 
@@ -24,18 +28,18 @@ export default function LoginPage() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
         <div className="text-center mb-8">
-<h1 className="text-2xl font-extrabold tracking-tight" style={{ color: '#000000' }}>
-            Log in to VitalArc
-          </h1>          <p className="text-sm text-slate-600 mt-1">Track your performance and vitals</p>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Log in to VitalArc</h1>
+            <p className="text-sm text-slate-600 mt-1">Track your performance and vitals</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-slate-800 mb-1.5">
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
               Email
             </label>
             <input
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -45,11 +49,12 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-800 mb-1.5">
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
               Password
             </label>
             <input
               type="password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -66,9 +71,10 @@ export default function LoginPage() {
 
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-sm transition-colors cursor-pointer text-sm"
           >
-            Log in
+           {isSubmitting ? 'Logging in...' : 'Log in'}
           </button>
         </form>
 
