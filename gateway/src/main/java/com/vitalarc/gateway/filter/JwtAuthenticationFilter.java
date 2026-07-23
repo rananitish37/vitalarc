@@ -5,9 +5,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -17,18 +19,13 @@ import reactor.core.publisher.Mono;
 import javax.crypto.SecretKey;
 import java.util.List;
 
-/**
- * Every single request passing through the gateway hits this filter first.
- *
- * How it works, step by step:
- *  1. Is this path one of the public ones (register/login/health)? -> let it through untouched.
- *  2. Otherwise, look for the "Authorization: Bearer <token>" header.
- *  3. No header, or an invalid/expired token -> reject with 401, request never reaches a service.
- *  4. Valid token -> attach the user's id as a header (X-User-Id) so downstream services
- *     know who's calling without having to re-validate the token themselves.
- */
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
+
+    private static final List<String> ALLOWED_ORIGINS = List.of(
+            "http://localhost:5173",
+            "https://vitalarc.vercel.app"
+    );
 
     private static final List<String> PUBLIC_PATHS = List.of(
             "/api/auth/register",
@@ -44,20 +41,30 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        String path = exchange.getRequest().getURI().getPath();
+        ServerHttpRequest request = exchange.getRequest();
+        ServerHttpResponse response = exchange.getResponse();
+        HttpHeaders headers = response.getHeaders();
 
-        // CORS preflight requests never carry auth headers - let them through
-        // so Spring's CORS handling can respond, or every browser request would
-        // fail here before CORS even gets evaluated.
-        if (exchange.getRequest().getMethod() == org.springframework.http.HttpMethod.OPTIONS) {
-            return chain.filter(exchange);
+        String origin = request.getHeaders().getFirst(HttpHeaders.ORIGIN);
+        if (origin != null && ALLOWED_ORIGINS.contains(origin)) {
+            headers.set(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+            headers.set(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
         }
 
+        if (request.getMethod() == HttpMethod.OPTIONS) {
+            headers.set(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, "GET, POST, PUT, DELETE, OPTIONS");
+            headers.set(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, "*");
+            headers.set(HttpHeaders.ACCESS_CONTROL_MAX_AGE, "3600");
+            response.setStatusCode(HttpStatus.OK);
+            return response.setComplete();
+        }
+
+        String path = request.getURI().getPath();
         if (isPublicPath(path)) {
             return chain.filter(exchange);
         }
 
-        String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
+        String authHeader = request.getHeaders().getFirst("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return reject(exchange, "Missing or malformed Authorization header");
         }
@@ -71,7 +78,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+            ServerHttpRequest mutatedRequest = request.mutate()
                     .header("X-User-Id", claims.getSubject())
                     .header("X-User-Role", claims.get("role", String.class))
                     .build();
@@ -94,6 +101,6 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -1; // run before other gateway filters
+        return -100;
     }
 }
